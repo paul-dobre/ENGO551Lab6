@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.js"></script>
+    <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.css" rel="stylesheet" />
+    <!-- Include Turf.js -->
+    
+</head>
+<body>
+    <div id="map"></div>
+    <button id="simplifyButton" class="btn btn-primary">Simplify Polylines</button>
+
+    <script>
+        //Initializing base leaflet map centered at Calgary
+        var map = L.map('map').setView([51.0347, -114.0719], 11);
+
+        //Initializing basemap from mapbox with api, and setting zoom.
+        var base = L.tileLayer('https://api.mapbox.com/styles/v1/ypaul/cltmfdyza016o01pta45m7rrf/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoieXBhdWwiLCJhIjoiY2xyYjNuNnM4MGpsdzJpcDd3ejEwanZyNCJ9.sLUzXHaHcm89Z7qNctEdDQ', {
+            maxZoom: 19,
+        });
+
+        //Adding the basemap to the map.
+        base.addTo(map);
+
+        // Reference for editable layers code: https://stackoverflow.com/questions/42939633/how-to-draw-a-polyline-using-the-mouse-and-leaflet-js
+        // Initialise the FeatureGroup to store editable layers
+            var editableLayers = new L.FeatureGroup();
+            //Adding editablelayers to map.
+            map.addLayer(editableLayers);
+        
+        //Setting options for the leaflet draw controls
+        var options = {
+            position: 'topleft', //Setting the position in the top left.
+            draw: { // Setting draw options for the polyline.
+                polyline: {
+                    shapeOptions: {
+                        color: '#0000ff',
+                        weight: 10
+                    }
+                },
+                // Disabling the other draw markers, keeping only the polyline. 
+                circle: false,
+                polygon: false,
+                marker: false,
+                rectangle: false,
+            },
+            edit: {
+                featureGroup: editableLayers, //Setting the editablelayers as the drawing featuregroup
+                remove: true
+            }
+        };
+
+        // Adding drawcontrols to the map with the options set above.
+        var drawControl = new L.Control.Draw(options); 
+        map.addControl(drawControl);
+
+        map.on('draw:created', function(e) {
+            var type = e.layerType,
+                layer = e.layer;
+
+            if (type === 'polyline') { // Setting logic to add pop-up and to add feature to map for polyline
+                layer.bindPopup('A polyline!');
+                editableLayers.addLayer(layer);
+            } else {
+                layer.bindPopup('A ' + type + '!');
+                editableLayers.addLayer(layer);
+            }
+        });
+
+        //Creating functionality for the simplify button.
+            document.getElementById('simplifyButton').addEventListener('click', function() {
+            editableLayers.eachLayer(function(layer) { // Iterating through each layer in editableLayers FeatureGroup
+                if (layer instanceof L.Polyline) {
+
+                    // Getting the coordinates of the polyline to format properly to pass to turf.js simplify function
+                    var latLngs = layer.getLatLngs();
+                    var coords = latLngs.map(function(latlng) {
+                        return [latlng.lat, latlng.lng];
+                    });
+
+                    // Simplifing the polyline using Turf.js turf.simplify function
+                    var simplifiedCoords = turf.simplify(turf.lineString(coords), { tolerance: 0.01 }).geometry.coordinates;
+                    
+                    // Creating a Leaflet polyline using the simplified coordinates returned from turf.simplify
+                    var simplifiedLayer = L.polyline(simplifiedCoords, { color: '#ee82ee', weight: 15 });
+                    simplifiedLayer.bindPopup('A simplified polyline!'); // adding a pop-up to indicate the change
+                    
+                    // Replacing the original polyline with the simplified one
+                    editableLayers.removeLayer(layer); // Remove original polyline
+                    editableLayers.addLayer(simplifiedLayer); // Add simplified polyline
+                }
+            });
+        });
+    </script>
+</body>
+</html>

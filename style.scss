@@ -1,0 +1,19 @@
+$main-font: 'Montserrat', sans-serif;
+
+
+body {
+    background-color: #a2b2bb;
+    font-family: $main-font;
+}
+
+#map { 
+    height: 100vh;
+    position: relative;
+ }
+
+ #simplifyButton {
+    position: absolute;
+    top: 200px;
+    left: 13px;
+    z-index: 1000;
+}

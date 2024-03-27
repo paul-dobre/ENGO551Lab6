@@ -1,0 +1,18 @@
+body {
+  background-color: #a2b2bb;
+  font-family: "Montserrat", sans-serif;
+}
+
+#map {
+  height: 100vh;
+  position: relative;
+}
+
+#simplifyButton {
+  position: absolute;
+  top: 200px;
+  left: 13px;
+  z-index: 1000;
+}
+
+/*# sourceMappingURL=style.css.map */
